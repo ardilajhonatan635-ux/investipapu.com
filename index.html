@@ -494,8 +494,9 @@ $("btnRegistro").addEventListener("click", async () => {
   estado("estadoCuenta", "Escribe un correo y una contraseña de al menos 8 caracteres.");
   return;
 }
+botonCargando($("btnRegistro"), true, "Creando cuenta...");
 
-  botonCargando($("btnRegistro"), true, "Creando cuenta...");
+  
 
   try {
     const { data, error } = await sb.auth.signUp({ email, password });
@@ -718,43 +719,50 @@ sb.auth.onAuthStateChange((_evento, sesion) => {
   cargarPublicaciones();
 });
 
-// Cargar sesión y publicaciones al abrir la página
-async function iniciarComunidad() 
-{
-   
+async function iniciarComunidad() {
   try {
     const { data, error } = await sb.auth.getSession();
     if (error) throw error;
+
     usuarioActual = data.session?.user || null;
     actualizarCuenta();
     await cargarPublicaciones();
   } catch (error) {
-    estado("estadoCuenta", "No se pudo conectar. Revisa la URL y la Publishable key.");
+    estado(
+      "estadoCuenta",
+      "No se pudo conectar. Revisa la URL y la Publishable key."
+    );
     estado("estadoMuro", "No se pudo conectar con Supabase.");
     console.error(error);
   }
 }
 
-iniciarComunidad()
+iniciarComunidad();
 
-  <script> 
 const buscador = document.getElementById("buscador");
-const tarjetas = [...document.querySelectorAll("#categorias .tarjeta")];
+const tarjetas = [
+  ...document.querySelectorAll("#categorias .tarjeta")
+];
 const mensaje = document.getElementById("sinResultados");
 
-buscador.addEventListener("input", () => {
-  const consulta = buscador.value.trim().toLocaleLowerCase("es");
-  let visibles = 0;
+if (buscador && mensaje) {
+  buscador.addEventListener("input", () => {
+    const consulta = buscador.value.trim().toLocaleLowerCase("es");
+    let visibles = 0;
 
-  tarjetas.forEach(tarjeta => {
-    const coincide = tarjeta.textContent
-      .toLocaleLowerCase("es").includes(consulta);
-    tarjeta.classList.toggle("oculto", !coincide);
-    if (coincide) visibles++;
+    tarjetas.forEach(tarjeta => {
+      const coincide = tarjeta.textContent
+        .toLocaleLowerCase("es")
+        .includes(consulta);
+
+      tarjeta.classList.toggle("oculto", !coincide);
+      if (coincide) visibles++;
+    });
+
+    mensaje.classList.toggle("oculto", visibles !== 0);
   });
+}
 
-  mensaje.classList.toggle("oculto", visibles !== 0);
-});
 </script>
 </body>
 </html>
