@@ -390,6 +390,7 @@ footer {
   <p>Arte, música y creatividad sin límites.</p>
   <p>Hecho con creatividad 💜 · 2026</p>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 const SUPABASE_URL = "https://eorqpyfknacxopcshhor.supabase.co/rest/v1/"
@@ -734,9 +735,9 @@ async function iniciarComunidad() {
 }
 
 iniciarComunidad();
-</script>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+ <script> 
 const buscador = document.getElementById("buscador");
 const tarjetas = [...document.querySelectorAll("#categorias .tarjeta")];
 const mensaje = document.getElementById("sinResultados");
