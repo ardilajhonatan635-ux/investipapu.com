@@ -493,7 +493,6 @@ $("btnRegistro").addEventListener("click", async () => {
   if (!email || password.length < 8) {
     estado("estadoCuenta", "Escribe un correo y una contraseña de al menos 8 caracteres.");
     return;
-  }
 
   botonCargando($("btnRegistro"), true, "Creando cuenta...");
 
