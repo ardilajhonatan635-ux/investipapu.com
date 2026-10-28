@@ -370,7 +370,7 @@ footer {
     <div id="muroPublicaciones" class="grid"></div>
   </div>
 </section>
- <section class="fondo-alternativo" id="comunidad">
+ <section class="fondo-alternativo" id="nosotros">
     <div class="destacado">
       <div class="etiqueta">Nuestra idea</div>
       <h2 class="titulo">Bienvenido a INVESTIPAPU</h2>
@@ -737,11 +737,6 @@ async function iniciarComunidad() {
   }
 }
 
-iniciarComunidad();
-</script>
-</body>
-</html>
-
   const buscador = document.getElementById("buscador");
 const tarjetas = [
   ...document.querySelectorAll("#categorias .tarjeta")
@@ -765,4 +760,7 @@ if (buscador && mensaje) {
     mensaje.classList.toggle("oculto", visibles !== 0);
   });
 }
-
+iniciarComunidad();
+</script>
+</body>
+</html>
