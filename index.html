@@ -135,8 +135,49 @@ footer {
   color: var(--suave);
   text-align: center;
 }
+
 .oculto { display: none; }
-@media(max-width:600px) {
+.formulario-comunidad {
+  display: grid;
+  gap: 14px;
+  max-width: 650px;
+  margin-bottom: 30px;
+}
+.campo-comunidad {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ffffff24;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--texto);
+  font: inherit;
+}
+.campo-comunidad option {
+  background: var(--panel);
+  color: var(--texto);
+}
+.botones-comunidad {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.publicacion {
+  overflow-wrap: anywhere;
+}
+.publicacion img {
+  display: block;
+  width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin-top: 15px;
+  background: #090914;
+}
+.estado-comunidad {
+  color: var(--cian);
+  overflow-wrap: anywhere;
+}
+  @media(max-width:600px) {
   header { align-items: flex-start; flex-direction: column; }
   nav { gap: 14px; font-size: .9rem; }
   .hero { padding: 75px 6%; }
@@ -152,7 +193,9 @@ footer {
     <a href="#arte">Arte</a>
     <a href="#musica">Música</a>
     <a href="#fusion">Arte + Música</a>
-    <a href="#nosotros">Nosotros</a>
+<a href="#comunidad">Comunidad</a>
+<a href="#nosotros">Nosotros</a>
+    
   </nav>
 </header>
 
@@ -246,8 +289,88 @@ footer {
       </article>
     </div>
   </section>
+<section class="fondo-alternativo" id="comunidad">
+  <div class="etiqueta">Tu creatividad tiene un lugar</div>
+  <h2 class="titulo">Comunidad INVESTIPAPU</h2>
+  <p class="descripcion">
+    Regístrate, comparte tus creaciones y descubre las de otras personas.
+  </p>
 
-  <section id="nosotros">
+  <article class="tarjeta">
+    <h3>👤 Tu cuenta</h3>
+    <form id="formCuenta" class="formulario-comunidad">
+      <input class="campo-comunidad" id="emailCuenta"
+        type="email" placeholder="Tu correo electrónico"
+        autocomplete="email" required maxlength="254">
+
+      <input class="campo-comunidad" id="claveCuenta"
+        type="password" placeholder="Contraseña (mínimo 8 caracteres)"
+        autocomplete="current-password" minlength="8"
+        maxlength="128" required>
+
+      <div class="botones-comunidad">
+        <button class="boton" type="submit" id="btnEntrar">
+          Iniciar sesión
+        </button>
+        <button class="boton" type="button" id="btnRegistro">
+          Crear cuenta
+        </button>
+        <button class="boton oculto" type="button" id="btnSalir">
+          Cerrar sesión
+        </button>
+      </div>
+    </form>
+    <p id="estadoCuenta" class="estado-comunidad" aria-live="polite">
+      Conecta tu cuenta para publicar.
+    </p>
+  </article>
+
+  <article class="tarjeta" style="margin-top:24px">
+    <h3>✨ Comparte una creación</h3>
+    <p class="descripcion">
+      Para arte puedes subir una imagen. Para música, comparte un enlace
+      público de YouTube o SoundCloud.
+    </p>
+
+    <form id="formPublicacion" class="formulario-comunidad">
+      <input class="campo-comunidad" id="tituloPublicacion"
+        type="text" placeholder="Título de tu publicación"
+        minlength="1" maxlength="100" required>
+
+      <select class="campo-comunidad" id="categoriaPublicacion" required>
+        <option value="arte">🎨 Arte</option>
+        <option value="musica">🎵 Música</option>
+      </select>
+
+      <textarea class="campo-comunidad" id="descripcionPublicacion"
+        placeholder="Cuéntanos sobre tu creación (opcional)"
+        maxlength="1000" rows="4"></textarea>
+
+      <label for="archivoPublicacion">Imagen de tu obra (opcional)</label>
+      <input class="campo-comunidad" id="archivoPublicacion"
+        type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+
+      <input class="campo-comunidad" id="enlacePublicacion"
+        type="url" placeholder="Enlace https:// (opcional)"
+        maxlength="2000">
+
+      <button class="boton" type="submit" id="btnPublicar">
+        Publicar creación
+      </button>
+    </form>
+    <p id="estadoPublicacion" class="estado-comunidad"
+      aria-live="polite"></p>
+  </article>
+
+  <div style="margin-top:40px">
+    <h3 class="titulo">🌎 Creaciones de la comunidad</h3>
+    <p id="estadoMuro" class="descripcion" aria-live="polite">
+      Cargando publicaciones...
+    </p>
+    <div id="muroPublicaciones" class="grid"></div>
+  </div>
+</section>
+ <section class="fondo-alternativo" id="comunidad">
     <div class="destacado">
       <div class="etiqueta">Nuestra idea</div>
       <h2 class="titulo">Bienvenido a INVESTIPAPU</h2>
@@ -269,6 +392,351 @@ footer {
 </footer>
 
 <script>
+const SUPABASE_URL = "https://eorqpyfknacxopcshhor.supabase.co/rest/v1/"
+
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Fk0UFxQGpwHp0-vl-iZptg_DY4nMfAM"
+
+const sb = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+// Buscador original
+const buscador = document.getElementById("buscador");
+const tarjetas = [...document.querySelectorAll("#categorias .tarjeta")];
+const mensaje = document.getElementById("sinResultados");
+
+buscador.addEventListener("input", () => {
+  const consulta = buscador.value.trim().toLocaleLowerCase("es");
+  let visibles = 0;
+
+  tarjetas.forEach(tarjeta => {
+    const coincide = tarjeta.textContent
+      .toLocaleLowerCase("es").includes(consulta);
+    tarjeta.classList.toggle("oculto", !coincide);
+    if (coincide) visibles++;
+  });
+
+  mensaje.classList.toggle("oculto", visibles !== 0);
+});
+
+// Elementos de la comunidad
+const $ = id => document.getElementById(id);
+let usuarioActual = null;
+
+function estado(id, texto) {
+  $(id).textContent = texto;
+}
+
+function botonCargando(boton, activo, texto) {
+  boton.disabled = activo;
+  if (activo) {
+    boton.dataset.textoOriginal = boton.textContent;
+    boton.textContent = texto;
+  } else {
+    boton.textContent = boton.dataset.textoOriginal || boton.textContent;
+  }
+}
+
+function enlaceSeguro(valor) {
+  if (!valor) return null;
+  try {
+    const url = new URL(valor);
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function actualizarCuenta() {
+  const conectado = Boolean(usuarioActual);
+  $("btnSalir").classList.toggle("oculto", !conectado);
+  $("btnEntrar").classList.toggle("oculto", conectado);
+  $("btnRegistro").classList.toggle("oculto", conectado);
+
+  $("emailCuenta").disabled = conectado;
+  $("claveCuenta").disabled = conectado;
+
+  estado(
+    "estadoCuenta",
+    conectado
+      ? "Sesión iniciada: " + usuarioActual.email
+      : "Inicia sesión o crea una cuenta para publicar."
+  );
+}
+
+// Iniciar sesión
+$("formCuenta").addEventListener("submit", async e => {
+  e.preventDefault();
+  const boton = $("btnEntrar");
+  botonCargando(boton, true, "Entrando...");
+
+  try {
+    const { error } = await sb.auth.signInWithPassword({
+      email: $("emailCuenta").value.trim(),
+      password: $("claveCuenta").value
+    });
+    if (error) throw error;
+    estado("estadoCuenta", "¡Sesión iniciada!");
+  } catch (error) {
+    estado("estadoCuenta", "No se pudo iniciar sesión: " + error.message);
+  } finally {
+    botonCargando(boton, false);
+  }
+});
+
+// Crear cuenta
+$("btnRegistro").addEventListener("click", async () => {
+  const email = $("emailCuenta").value.trim();
+  const password = $("claveCuenta").value;
+
+  if (!email || password.length < 8) {
+    estado("estadoCuenta", "Escribe un correo y una contraseña de al menos 8 caracteres.");
+    return;
+  }
+
+  botonCargando($("btnRegistro"), true, "Creando cuenta...");
+
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) throw error;
+
+    if (data.session) {
+      estado("estadoCuenta", "¡Cuenta creada y sesión iniciada!");
+    } else {
+      estado("estadoCuenta", "Cuenta creada. Revisa tu correo para confirmar el registro y luego inicia sesión.");
+    }
+  } catch (error) {
+    estado("estadoCuenta", "No se pudo crear la cuenta: " + error.message);
+  } finally {
+    botonCargando($("btnRegistro"), false);
+  }
+});
+
+// Cerrar sesión
+$("btnSalir").addEventListener("click", async () => {
+  const { error } = await sb.auth.signOut();
+  if (error) estado("estadoCuenta", "Error al cerrar sesión: " + error.message);
+});
+
+// Publicar arte o música
+$("formPublicacion").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  if (!usuarioActual) {
+    estado("estadoPublicacion", "Primero inicia sesión.");
+    return;
+  }
+
+  const boton = $("btnPublicar");
+  botonCargando(boton, true, "Publicando...");
+
+  let rutaSubida = null;
+
+  try {
+    const titulo = $("tituloPublicacion").value.trim();
+    const descripcion = $("descripcionPublicacion").value.trim();
+    const categoria = $("categoriaPublicacion").value;
+    const archivo = $("archivoPublicacion").files[0];
+    const enlaceTexto = $("enlacePublicacion").value.trim();
+
+    if (!titulo || titulo.length > 100 || descripcion.length > 1000) {
+      throw new Error("Revisa el título o la descripción.");
+    }
+
+    if (archivo) {
+      const tiposPermitidos = [
+        "image/jpeg", "image/png", "image/webp", "image/gif"
+      ];
+
+      if (!tiposPermitidos.includes(archivo.type)) {
+        throw new Error("Solo se permiten imágenes JPG, PNG, WEBP o GIF.");
+      }
+
+      if (archivo.size > 5 * 1024 * 1024) {
+        throw new Error("La imagen debe pesar máximo 5 MB.");
+      }
+
+      const nombreSeguro = archivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      rutaSubida = usuarioActual.id + "/" + crypto.randomUUID() + "-" + nombreSeguro;
+
+      const { error: errorArchivo } = await sb.storage
+        .from("creaciones")
+        .upload(rutaSubida, archivo, {
+          contentType: archivo.type,
+          upsert: false
+        });
+
+      if (errorArchivo) throw errorArchivo;
+    }
+
+    let mediaUrl = null;
+
+    if (rutaSubida) {
+      const { data } = sb.storage.from("creaciones").getPublicUrl(rutaSubida);
+      mediaUrl = data.publicUrl;
+    } else if (enlaceTexto) {
+      mediaUrl = enlaceSeguro(enlaceTexto);
+      if (!mediaUrl) {
+        throw new Error("El enlace debe comenzar con https://");
+      }
+    }
+
+    const { error } = await sb.from("publicaciones").insert({
+      user_id: usuarioActual.id,
+      titulo,
+      descripcion,
+      categoria,
+      media_url: mediaUrl
+    });
+
+    if (error) throw error;
+
+    $("formPublicacion").reset();
+    estado("estadoPublicacion", "¡Tu creación ya está publicada!");
+    await cargarPublicaciones();
+
+  } catch (error) {
+    estado("estadoPublicacion", "No se pudo publicar: " + error.message);
+  } finally {
+    botonCargando(boton, false);
+  }
+});
+
+// Muro público
+async function cargarPublicaciones() {
+  estado("estadoMuro", "Cargando publicaciones...");
+  $("muroPublicaciones").replaceChildren();
+
+  try {
+    const { data, error } = await sb
+      .from("publicaciones")
+      .select("id,user_id,titulo,descripcion,categoria,media_url,creado_en")
+      .order("creado_en", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      estado("estadoMuro", "Todavía no hay publicaciones. ¡Sé el primero en compartir!");
+      return;
+    }
+
+    estado("estadoMuro", "Mostrando las últimas " + data.length + " publicaciones.");
+
+    for (const post of data) {
+      const tarjeta = document.createElement("article");
+      tarjeta.className = "tarjeta publicacion";
+
+      const titulo = document.createElement("h3");
+      titulo.textContent = (post.categoria === "musica" ? "🎵 " : "🎨 ") + post.titulo;
+      tarjeta.append(titulo);
+
+      const categoria = document.createElement("p");
+      categoria.textContent = post.categoria === "musica" ? "Música" : "Arte";
+      tarjeta.append(categoria);
+
+      if (post.descripcion) {
+        const descripcion = document.createElement("p");
+        descripcion.textContent = post.descripcion;
+        tarjeta.append(descripcion);
+      }
+
+      const url = enlaceSeguro(post.media_url);
+
+      if (url) {
+        const esImagen = url.includes("/storage/v1/object/public/creaciones/");
+
+        if (esImagen) {
+          const imagen = document.createElement("img");
+          imagen.src = url;
+          imagen.alt = "Imagen compartida: " + post.titulo;
+          imagen.loading = "lazy";
+          imagen.referrerPolicy = "no-referrer";
+          tarjeta.append(imagen);
+        } else {
+          const enlace = document.createElement("a");
+          enlace.href = url;
+          enlace.target = "_blank";
+          enlace.rel = "noopener noreferrer";
+          enlace.className = "enlace";
+          enlace.textContent = post.categoria === "musica"
+            ? "Escuchar o ver la música ↗"
+            : "Abrir enlace de la creación ↗";
+          tarjeta.append(enlace);
+        }
+      }
+
+      const fecha = document.createElement("small");
+      const fechaValida = new Date(post.creado_en);
+      fecha.textContent = "Publicado " +
+        (Number.isNaN(fechaValida.getTime())
+          ? ""
+          : fechaValida.toLocaleDateString("es-CO"));
+      tarjeta.append(fecha);
+
+      if (usuarioActual && usuarioActual.id === post.user_id) {
+        const eliminar = document.createElement("button");
+        eliminar.type = "button";
+        eliminar.className = "boton";
+        eliminar.style.marginTop = "15px";
+        eliminar.textContent = "Eliminar publicación";
+
+        eliminar.addEventListener("click", async () => {
+          if (!confirm("¿Quieres eliminar esta publicación?")) return;
+
+          eliminar.disabled = true;
+
+          const { error } = await sb
+            .from("publicaciones")
+            .delete()
+            .eq("id", post.id);
+
+          if (error) {
+            estado("estadoMuro", "No se pudo eliminar: " + error.message);
+            eliminar.disabled = false;
+          } else {
+            await cargarPublicaciones();
+          }
+        });
+
+        tarjeta.append(eliminar);
+      }
+
+      $("muroPublicaciones").append(tarjeta);
+    }
+  } catch (error) {
+    estado("estadoMuro", "No se pudieron cargar las publicaciones. Revisa la configuración de Supabase.");
+    console.error(error);
+  }
+}
+
+// Actualizar la interfaz cuando cambia la sesión
+sb.auth.onAuthStateChange((_evento, sesion) => {
+  usuarioActual = sesion?.user || null;
+  actualizarCuenta();
+  cargarPublicaciones();
+});
+
+// Cargar sesión y publicaciones al abrir la página
+async function iniciarComunidad() {
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    usuarioActual = data.session?.user || null;
+    actualizarCuenta();
+    await cargarPublicaciones();
+  } catch (error) {
+    estado("estadoCuenta", "No se pudo conectar. Revisa la URL y la Publishable key.");
+    estado("estadoMuro", "No se pudo conectar con Supabase.");
+    console.error(error);
+  }
+}
+
+iniciarComunidad();
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 const buscador = document.getElementById("buscador");
 const tarjetas = [...document.querySelectorAll("#categorias .tarjeta")];
 const mensaje = document.getElementById("sinResultados");
