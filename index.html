@@ -194,7 +194,7 @@ footer {
     <a href="#musica">Música</a>
     <a href="#fusion">Arte + Música</a>
 <a href="#comunidad">Comunidad</a>
-<a href="nosotros">Nosotros</a>
+<a href="#nosotros">Nosotros</a>
     
   </nav>
 </header>
@@ -490,9 +490,10 @@ $("btnRegistro").addEventListener("click", async () => {
   const email = $("emailCuenta").value.trim();
   const password = $("claveCuenta").value;
 
-  if (!email || password.length < 8) {
-    estado("estadoCuenta", "Escribe un correo y una contraseña de al menos 8 caracteres.");
-    return;
+ if (!email || password.length < 8) {
+  estado("estadoCuenta", "Escribe un correo y una contraseña de al menos 8 caracteres.");
+  return;
+}
 
   botonCargando($("btnRegistro"), true, "Creando cuenta...");
 
@@ -718,14 +719,9 @@ sb.auth.onAuthStateChange((_evento, sesion) => {
 });
 
 // Cargar sesión y publicaciones al abrir la página
-async function {
- 
-iniciarComunidad();
-</script>
-</body>
-</html>
- 
-  
+async function iniciarComunidad() 
+{
+   
   try {
     const { data, error } = await sb.auth.getSession();
     if (error) throw error;
